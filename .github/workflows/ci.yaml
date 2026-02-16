@@ -1,0 +1,67 @@
+name: CI
+on:
+  push: {}
+  pull_request:
+    branches:
+    - main
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          VITE_REQUIRED_QUERY_PARAM: ${{ matrix.query_param }}
+      - name: Upload Artifact
+        uses:
+          # yamllint disable-line rule:line-length
+          actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
+        with:
+          name: >-
+            dist${{
+              matrix.query_param != ''
+              && format('-{0}', matrix.query_param)
+              || ''
+            }}
+          path: dist/ha-auto-refresh.js
+          if-no-files-found: error
+    strategy:
+      matrix:
+        query_param:
+        - ""
+        - kiosk
+  release:
+    name: Create Release
+    permissions:
+      contents: write
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Download Artifacts
+        uses:
+          # yamllint disable-line rule:line-length
+          actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: dist*
+      - name: Prepare Release Files
+        run: |
+          mkdir release
+          for dir in dist*; do
+            cp "$dir/ha-auto-refresh.js" "release/ha-auto-refresh${dir#dist}.js"
+          done
+      - name: Create Release
+        uses:
+          # yamllint disable-line rule:line-length
+          softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          files: release/*

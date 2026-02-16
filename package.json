@@ -1,0 +1,21 @@
+{
+  "name": "ha-auto-refresh",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n BUILD,SERVE -c green.bold,blue.bold -k \"vite build --watch\" \"http-server dist --cors -c-1\"",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "concurrently": "^9.2.1",
+    "http-server": "^14.1.1",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.0-beta.13"
+  },
+  "overrides": {
+    "vite": "^8.0.0-beta.13"
+  }
+}
